@@ -5,7 +5,7 @@
 
 (depends-on "auto-complete")
 (depends-on "auto-indent-mode")
-(depends-on "carton")
+(depends-on "cask")
 (depends-on "coffee-mode")
 (depends-on "gh")
 (depends-on "gist")
