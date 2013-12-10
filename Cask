@@ -25,6 +25,7 @@
 (depends-on "magit")
 (depends-on "markdown-mode")
 (depends-on "monokai-theme")
+(depends-on "solarized-theme")
 (depends-on "move-text")
 (depends-on "multi-term")
 (depends-on "nrepl")
