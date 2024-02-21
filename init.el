@@ -128,6 +128,8 @@
 
 (use-package format-all)
 
+(use-package python-pytest)
+
 (add-hook 'org-mode-hook 'org-indent-mode) ;; Indent text
 
 (use-package toc-org

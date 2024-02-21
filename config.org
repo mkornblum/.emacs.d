@@ -282,6 +282,11 @@ Auto-format all the code with one command, regardless of language https://github
 #+begin_src emacs-lisp
 (use-package format-all)
 #+end_src
+*** Python
+Also note, need to brew-install `ruff-lsp` and make sure it's configured in the eglot section above. 
+#+begin_src emacs-lisp
+(use-package python-pytest)
+#+end_src
 
 *** Org Mode
 Org mode is one of the things that emacs is loved for.
