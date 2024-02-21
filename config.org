@@ -84,6 +84,13 @@ automatically exports the configuration here to the associated output files.
     (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'start/org-babel-tangle-config)))
 #+end_src
 
+** Set user info 
+Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates and snippets.
+#+begin_src emacs-lisp
+(setq user-full-name "Mark Kornblum"
+      user-mail-address "mkornblum@aurorasolar.com")
+#+end_src 
+
 ** Use Package
 We use the default package manager package.el with use-package. Alternative package managers (straight.el, elpaca, etc.) are useful if you want to
 install packages from git repositories, if you want a specific, not very popular package that is not available on elpa or melpa,
@@ -102,105 +109,6 @@ With Emacs 29 use-package is now built-in.
                              ("org" . "https://orgmode.org/elpa/")
                              ("elpa" . "https://elpa.gnu.org/packages/")
                              ("nongnu" . "https://elpa.nongnu.org/nongnu/"))) ;; For Eat Terminal
-#+end_src
-
-** Evil Mode
-An extensible vi/vim layer for Emacs. Because…let’s face it. The Vim keybindings are just plain better.
-Notes:
-- You can toggle evil mode with C-z.
-- To paste without copy (yank) select the text and use P (shift-p).
-#+begin_src emacs-lisp
-    (use-package evil
-      :init ;; Execute code Before a package is loaded
-      (evil-mode)
-      :config ;; Execute code After a package is loaded
-      (evil-set-initial-state 'eat-mode 'insert) ;; Set initial state in eat terminal to insert mode
-      :custom ;; Customization of package custom variables
-      (evil-want-keybinding nil)    ;; Disable evil bindings in other modes (It's not consistent and not good)
-      (evil-want-C-u-scroll t)      ;; Set C-u to scroll up
-      (evil-want-C-i-jump nil)      ;; Disables C-i jump
-      (evil-undo-system 'undo-redo) ;; C-r to redo
-      (org-return-follows-link  t)) ;; Sets RETURN key in org-mode to follow links
-    (use-package evil-collection
-      :after evil
-      :config
-      ;; Setting where to use evil-collection
-      (setq evil-collection-mode-list '(dired ibuffer magit corfu vertico consult))
-      (evil-collection-init))
-    ;; Unmap keys in 'evil-maps. If not done, org-return-follows-link will not work
-    (with-eval-after-load 'evil-maps
-      (define-key evil-motion-state-map (kbd "SPC") nil)
-      (define-key evil-motion-state-map (kbd "RET") nil)
-      (define-key evil-motion-state-map (kbd "TAB") nil))
-#+end_src
-
-** General Keybindings
-A keybinding framework to set keybindings easily.
-The Leader key is what you will press when you want to access your keybindings (SPC + . Find file).
-To search and replace, use query-replace-regexp to replace one by one C-M-% (SPC to replace n to skip).
-#+begin_src emacs-lisp
-    (use-package general
-      :config
-      (general-evil-setup)
-      ;; Set up 'SPC' as the leader key
-      (general-create-definer start/leader-keys
-        :states '(normal insert visual motion emacs)
-        :keymaps 'override
-        :prefix "SPC"           ;; Set leader key
-        :global-prefix "C-SPC") ;; Set global leader key
-
-      (start/leader-keys
-        "." '(find-file :wk "Find file")
-        "TAB" '(comment-line :wk "Comment lines")
-        "p" '(projectile-command-map :wk "Projectile command map"))
-
-      (start/leader-keys
-        "f" '(:ignore t :wk "Find")
-        "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
-        "f r" '(recentf :wk "Recent files")
-        "f f" '(consult-fd :wk "Fd search for files")
-        "f g" '(consult-ripgrep :wk "Ripgrep search in files")
-        "f l" '(consult-line :wk "Find line")
-        "f i" '(consult-imenu :wk "Imenu buffer locations"))
-
-      (start/leader-keys
-        "b" '(:ignore t :wk "Buffer Bookmarks")
-        "b b" '(consult-buffer :wk "Switch buffer")
-        "b k" '(kill-this-buffer :wk "Kill this buffer")
-        "b i" '(ibuffer :wk "Ibuffer")
-        "b n" '(next-buffer :wk "Next buffer")
-        "b p" '(previous-buffer :wk "Previous buffer")
-        "b r" '(revert-buffer :wk "Reload buffer")
-        "b j" '(consult-bookmark :wk "Bookmark jump"))
-
-      (start/leader-keys
-        "d" '(:ignore t :wk "Dired")
-        "d v" '(dired :wk "Open dired")
-        "d j" '(dired-jump :wk "Dired jump to current"))
-
-      (start/leader-keys
-        "e" '(:ignore t :wk "Eglot")
-        "e e" '(eglot-reconnect :wk "Eglot Reconnect")
-        "e f" '(eglot-format :wk "Eglot Format"))
-
-      (start/leader-keys
-        "g" '(:ignore t :wk "Git")
-        "g g" '(magit-status :wk "Magit status"))
-
-      (start/leader-keys
-        "h" '(:ignore t :wk "Help") ;; To get more help use C-h commands (describe variable, function, etc.)
-        "h r" '((lambda () (interactive)
-                  (load-file "~/.config/emacs/init.el"))
-                :wk "Reload emacs config"))
-
-      (start/leader-keys
-        "s" '(:ignore t :wk "Show")
-        "s e" '(eat :wk "Show Eat terminal"))
-
-      (start/leader-keys
-        "t" '(:ignore t :wk "Toggle")
-        "t t" '(visual-line-mode :wk "Toggle truncated lines (wrap)")
-        "t l" '(display-line-numbers-mode :wk "Toggle line numbers")))
 #+end_src
 
 ** Good Defaults
@@ -244,7 +152,7 @@ Set gruvbox theme, if you want some themes try out doom-themes.
 #+begin_src emacs-lisp
     (use-package gruvbox-theme
       :config
-      (load-theme 'gruvbox-dark-medium t)) ;; We need to add t to trust this package
+      (load-theme 'gruvbox-light-medium t)) ;; We need to add t to trust this package
 #+end_src
 
 ** Transparency
@@ -257,7 +165,7 @@ With Emacs version 29, true transparency has been added.
 *** Setting fonts
 #+begin_src emacs-lisp
     (set-face-attribute 'default nil
-                        ;; :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
+                        :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
                         :height 120
                         :weight 'medium)
     ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -321,19 +229,26 @@ Or add the lua-language-server executable to your path.
 If you can use a package manager just install the lsp server and add a hook.
 Use visual block to uncomment easily in Org documents (C-v).
 #+begin_src emacs-lisp
-    ;;(use-package eglot
-    ;;  :ensure nil ;; Don't install eglot because it's now built-in
-    ;;  :hook (('c-mode . 'eglot-ensure) ;; Autostart lsp servers for a given mode
-    ;;         ('c++-mode . 'eglot-ensure)
-    ;;         ('lua-mode . 'eglot-ensure)) ;; Lua-mode needs to be installed
-    ;;  :config
-    ;;  ;; Good default
-    ;;  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-    ;;        eglot-autoshutdown t) ;; Shutdown unused servers.
-    ;;  ;; Manual lsp servers
-    ;;  (add-to-list 'eglot-server-programs
-    ;;               `(lua-mode . ("PATH_TO_THE_LSP_FOLDER/bin/lua-language-server" "-lsp"))) ;; Adds our lua lsp server to eglot's server list
-    ;;  )
+    (use-package eglot
+      :ensure nil ;; Don't install eglot because it's now built-in
+      :hook (('python-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+      :config
+      ;; Good default
+      (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+            eglot-autoshutdown t) ;; Shutdown unused servers.
+      ;; Manual lsp servers
+      (add-to-list 'eglot-server-programs
+                   `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+      )
+#+end_src
+
+** Flycheck
+On the fly syntax checking for languages where we don't use LSP servers (cough Ruby)
+#+begin_src emacs-lisp
+(use-package flycheck
+  :ensure t
+  :config
+  (add-hook 'after-init-hook #'global-flycheck-mode))
 #+end_src
 
 ** Yasnippet
@@ -347,8 +262,6 @@ To use it write out the full keyword (or use autocompletion) and press Tab.
 ** Language modes
 It's not required for every language like C,C++,C#,Java,Javascript etc. to install language mode packages,
 but for more specific languages it is necessary for syntax highlighting.
-If you want to use TreeSitter, check out this [[https://www.masteringemacs.org/article/how-to-get-started-tree-sitter][website]] or try out [[https://github.com/renzmann/treesit-auto][Treesit-auto]].
-Currently it's tedious to use Treesitter, because emacs has not yet fully migrated to it.
 *** Lua mode
 Example, how to setup a language mode (if you don't want it, feel free to delete it).
 Use SPC-tab to uncomment the lines.
@@ -356,6 +269,19 @@ Use SPC-tab to uncomment the lines.
 #     (use-package lua-mode
 #       :mode "\\.lua\\'") ;; Only start in a lua file
 # #+end_src
+*** Tree-sitter
+From https://emacs-tree-sitter.github.io/
+#+begin_src emacs-lisp
+(use-package tree-sitter)
+(use-package tree-sitter-langs)
+(global-tree-sitter-mode)
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+#+end_src
+*** Format all mode
+Auto-format all the code with one command, regardless of language https://github.com/lassik/emacs-format-all-the-code
+#+begin_src emacs-lisp
+(use-package format-all)
+#+end_src
 
 *** Org Mode
 Org mode is one of the things that emacs is loved for.
@@ -399,14 +325,13 @@ We setup eat with eshell, if you want to use bash, zsh etc., check out their git
     (use-package eat
       :hook ('eshell-load-hook #'eat-eshell-mode))
 #+end_src
-
 * Multi File Example
 ** Adding the lisp directory to load-path
 Adds the lisp directory to emacs's load path to search for elisp files.
 This is necessary, because emacs does not search the entire user-emacs-directory.
 The directory name can be anything, just add it to the load-path.
 #+begin_src emacs-lisp
-    ;; (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+    (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 #+end_src
 
 ** Sourcing the files
@@ -416,12 +341,14 @@ Notes:
 - When naming elisp files, functions, it is recommended to use a group name (e.g init-, start- or any custom name), so it does not get mixed up with other names, functions.
 #+begin_src emacs-lisp
     ;; (require 'start-multiFileExample)
+(require 'asdf)
 #+end_src
 
 ** Using the file
 And now we can use everything from that file.
 #+begin_src emacs-lisp
     ;; (start/hello)
+(asdf-enable)
 #+end_src
 
 * Other Packages
@@ -460,6 +387,11 @@ Highlights uncommitted changes on the left side of the window (area also known a
       :hook ((magit-pre-refresh-hook . diff-hl-magit-pre-refresh)
              (magit-post-refresh-hook . diff-hl-magit-post-refresh))
       :init (global-diff-hl-mode))
+#+end_src
+*** Other nice git stuff
+#+begin_src emacs-lisp
+(use-package git-timemachine)
+(use-package browse-at-remote)
 #+end_src
 
 ** Corfu

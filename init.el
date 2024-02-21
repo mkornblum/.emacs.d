@@ -20,98 +20,15 @@
 
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'start/org-babel-tangle-config)))
 
+(setq user-full-name "Mark Kornblum"
+      user-mail-address "mkornblum@aurorasolar.com")
+
 (require 'use-package-ensure) ;; Load use-package-always-ensure
 (setq use-package-always-ensure t) ;; Always ensures that a package is installed
 (setq package-archives '(("melpa" . "https://melpa.org/packages/") ;; Sets default package repositories
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")
                          ("nongnu" . "https://elpa.nongnu.org/nongnu/"))) ;; For Eat Terminal
-
-(use-package evil
-  :init ;; Execute code Before a package is loaded
-  (evil-mode)
-  :config ;; Execute code After a package is loaded
-  (evil-set-initial-state 'eat-mode 'insert) ;; Set initial state in eat terminal to insert mode
-  :custom ;; Customization of package custom variables
-  (evil-want-keybinding nil)    ;; Disable evil bindings in other modes (It's not consistent and not good)
-  (evil-want-C-u-scroll t)      ;; Set C-u to scroll up
-  (evil-want-C-i-jump nil)      ;; Disables C-i jump
-  (evil-undo-system 'undo-redo) ;; C-r to redo
-  (org-return-follows-link  t)) ;; Sets RETURN key in org-mode to follow links
-(use-package evil-collection
-  :after evil
-  :config
-  ;; Setting where to use evil-collection
-  (setq evil-collection-mode-list '(dired ibuffer magit corfu vertico consult))
-  (evil-collection-init))
-;; Unmap keys in 'evil-maps. If not done, org-return-follows-link will not work
-(with-eval-after-load 'evil-maps
-  (define-key evil-motion-state-map (kbd "SPC") nil)
-  (define-key evil-motion-state-map (kbd "RET") nil)
-  (define-key evil-motion-state-map (kbd "TAB") nil))
-
-(use-package general
-  :config
-  (general-evil-setup)
-  ;; Set up 'SPC' as the leader key
-  (general-create-definer start/leader-keys
-    :states '(normal insert visual motion emacs)
-    :keymaps 'override
-    :prefix "SPC"           ;; Set leader key
-    :global-prefix "C-SPC") ;; Set global leader key
-
-  (start/leader-keys
-    "." '(find-file :wk "Find file")
-    "TAB" '(comment-line :wk "Comment lines")
-    "p" '(projectile-command-map :wk "Projectile command map"))
-
-  (start/leader-keys
-    "f" '(:ignore t :wk "Find")
-    "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
-    "f r" '(recentf :wk "Recent files")
-    "f f" '(consult-fd :wk "Fd search for files")
-    "f g" '(consult-ripgrep :wk "Ripgrep search in files")
-    "f l" '(consult-line :wk "Find line")
-    "f i" '(consult-imenu :wk "Imenu buffer locations"))
-
-  (start/leader-keys
-    "b" '(:ignore t :wk "Buffer Bookmarks")
-    "b b" '(consult-buffer :wk "Switch buffer")
-    "b k" '(kill-this-buffer :wk "Kill this buffer")
-    "b i" '(ibuffer :wk "Ibuffer")
-    "b n" '(next-buffer :wk "Next buffer")
-    "b p" '(previous-buffer :wk "Previous buffer")
-    "b r" '(revert-buffer :wk "Reload buffer")
-    "b j" '(consult-bookmark :wk "Bookmark jump"))
-
-  (start/leader-keys
-    "d" '(:ignore t :wk "Dired")
-    "d v" '(dired :wk "Open dired")
-    "d j" '(dired-jump :wk "Dired jump to current"))
-
-  (start/leader-keys
-    "e" '(:ignore t :wk "Eglot")
-    "e e" '(eglot-reconnect :wk "Eglot Reconnect")
-    "e f" '(eglot-format :wk "Eglot Format"))
-
-  (start/leader-keys
-    "g" '(:ignore t :wk "Git")
-    "g g" '(magit-status :wk "Magit status"))
-
-  (start/leader-keys
-    "h" '(:ignore t :wk "Help") ;; To get more help use C-h commands (describe variable, function, etc.)
-    "h r" '((lambda () (interactive)
-              (load-file "~/.config/emacs/init.el"))
-            :wk "Reload emacs config"))
-
-  (start/leader-keys
-    "s" '(:ignore t :wk "Show")
-    "s e" '(eat :wk "Show Eat terminal"))
-
-  (start/leader-keys
-    "t" '(:ignore t :wk "Toggle")
-    "t t" '(visual-line-mode :wk "Toggle truncated lines (wrap)")
-    "t l" '(display-line-numbers-mode :wk "Toggle line numbers")))
 
 (menu-bar-mode -1)           ;; Disable the menu bar
 (scroll-bar-mode -1)         ;; Disable the scroll bar
@@ -147,12 +64,12 @@
 
 (use-package gruvbox-theme
   :config
-  (load-theme 'gruvbox-dark-medium t)) ;; We need to add t to trust this package
+  (load-theme 'gruvbox-light-medium t)) ;; We need to add t to trust this package
 
 (add-to-list 'default-frame-alist '(alpha-background . 90)) ;; For all new frames henceforth
 
 (set-face-attribute 'default nil
-                    ;; :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
+                    :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
                     :height 120
                     :weight 'medium)
 ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -184,22 +101,32 @@
   (projectile-project-search-path '("~/projects/" "~/work/" ("~/github" . 1)))) ;; . 1 means only search the first subdirectory level for projects
 ;; Use Bookmarks for smaller, not standard projects
 
-;;(use-package eglot
-;;  :ensure nil ;; Don't install eglot because it's now built-in
-;;  :hook (('c-mode . 'eglot-ensure) ;; Autostart lsp servers for a given mode
-;;         ('c++-mode . 'eglot-ensure)
-;;         ('lua-mode . 'eglot-ensure)) ;; Lua-mode needs to be installed
-;;  :config
-;;  ;; Good default
-;;  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-;;        eglot-autoshutdown t) ;; Shutdown unused servers.
-;;  ;; Manual lsp servers
-;;  (add-to-list 'eglot-server-programs
-;;               `(lua-mode . ("PATH_TO_THE_LSP_FOLDER/bin/lua-language-server" "-lsp"))) ;; Adds our lua lsp server to eglot's server list
-;;  )
+(use-package eglot
+  :ensure nil ;; Don't install eglot because it's now built-in
+  :hook (('python-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+  :config
+  ;; Good default
+  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+        eglot-autoshutdown t) ;; Shutdown unused servers.
+  ;; Manual lsp servers
+  (add-to-list 'eglot-server-programs
+               `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+  )
+
+(use-package flycheck
+  :ensure t
+  :config
+  (add-hook 'after-init-hook #'global-flycheck-mode))
 
 (use-package yasnippet-snippets
   :hook (prog-mode . yas-minor-mode))
+
+(use-package tree-sitter)
+(use-package tree-sitter-langs)
+(global-tree-sitter-mode)
+(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+
+(use-package format-all)
 
 (add-hook 'org-mode-hook 'org-indent-mode) ;; Indent text
 
@@ -217,11 +144,13 @@
 (use-package eat
   :hook ('eshell-load-hook #'eat-eshell-mode))
 
-;; (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
 ;; (require 'start-multiFileExample)
+(require 'asdf)
 
 ;; (start/hello)
+(asdf-enable)
 
 (use-package nerd-icons
   :if (display-graphic-p))
@@ -239,6 +168,9 @@
   :hook ((magit-pre-refresh-hook . diff-hl-magit-pre-refresh)
          (magit-post-refresh-hook . diff-hl-magit-post-refresh))
   :init (global-diff-hl-mode))
+
+(use-package git-timemachine)
+(use-package browse-at-remote)
 
 (use-package corfu
   ;; Optional customizations
