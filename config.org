@@ -11,7 +11,6 @@
   - [[#startup-performance][Startup Performance]]
   - [[#auto-tangle-configuration-file][Auto-tangle Configuration file]]
   - [[#use-package][Use Package]]
-  - [[#evil-mode][Evil Mode]]
   - [[#general-keybindings][General Keybindings]]
   - [[#good-defaults][Good Defaults]]
 - [[#appearance][Appearance]]
@@ -30,6 +29,7 @@
   - [[#sourcing-the-files][Sourcing the files]]
   - [[#using-the-file][Using the file]]
 - [[#other-packages][Other Packages]]
+  - Ace Window
   - [[#nerd-icons][Nerd Icons]]
   - [[#git][Git]]
   - [[#corfu][Corfu]]
@@ -353,6 +353,16 @@ And now we can use everything from that file.
 
 * Other Packages
 All the package setups that don't need much tweaking.
+** Ace Window
+Nice for moving from window to window quickly
+#+begin_src emacs-lisp
+(use-package ace-window
+  :custom
+  (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  :init
+  (global-set-key (kbd "M-o") 'ace-window)
+)
+#+end_src
 ** Nerd Icons
 For icons and more helpful UI.
 This is an icon set that can be used with dired, ibuffer and other Emacs programs.

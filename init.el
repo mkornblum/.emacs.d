@@ -152,6 +152,13 @@
 ;; (start/hello)
 (asdf-enable)
 
+(use-package ace-window
+  :custom
+  (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  :init
+  (global-set-key (kbd "M-o") 'ace-window)
+)
+
 (use-package nerd-icons
   :if (display-graphic-p))
 
