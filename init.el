@@ -69,8 +69,8 @@
 (add-to-list 'default-frame-alist '(alpha-background . 90)) ;; For all new frames henceforth
 
 (set-face-attribute 'default nil
-                    :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
-                    :height 120
+                    :font "Fira Code" ;; Set your favorite type of font or download JetBrains Mono
+                    :height 130
                     :weight 'medium)
 ;; This sets the default font on all graphical frames created after restarting Emacs.
 ;; Does the same thing as 'set-face-attribute default' above, but emacsclient fonts
@@ -90,7 +90,8 @@
   (doom-modeline-height 25)     ;; Sets modeline height
   (doom-modeline-bar-width 5)   ;; Sets right bar width
   (doom-modeline-persp-name t)  ;; Adds perspective name to modeline
-  (doom-modeline-persp-icon t)) ;; Adds folder icon next to persp name
+  (doom-modeline-persp-icon t) ;; Adds folder icon next to persp name
+  (doom-modeline-buffer-file-name-style 'truncate-upto-project))
 
 (use-package projectile
   :init
@@ -98,7 +99,7 @@
   :custom
   (projectile-run-use-comint-mode t) ;; Interactive run dialog when running projects inside emacs (like giving input)
   (projectile-switch-project-action #'projectile-dired)
-  (projectile-project-search-path '("~/projects/" "~/work/" ("~/github" . 1)))) ;; . 1 means only search the first subdirectory level for projects
+  (projectile-project-search-path '(("~/code" . 1)))) ;; . 1 means only search the first subdirectory level for projects
 ;; Use Bookmarks for smaller, not standard projects
 
 (use-package eglot
@@ -119,6 +120,7 @@
   (add-hook 'after-init-hook #'global-flycheck-mode))
 
 (use-package yasnippet-snippets
+  :custom (yas-snippet-dirs '("~/.config/emacs/snippets"))
   :hook (prog-mode . yas-minor-mode))
 
 (use-package tree-sitter)
@@ -128,7 +130,7 @@
 
 (use-package format-all)
 
-(use-package python-pytest)
+(use-package python-pytest) ;; this seems to only work with pytest, not with unittest, not sure about others :\
 
 (add-hook 'org-mode-hook 'org-indent-mode) ;; Indent text
 
@@ -150,13 +152,19 @@
 
 ;; (require 'start-multiFileExample)
 (require 'asdf)
+(require 'meow-qwerty)
 
 ;; (start/hello)
 (asdf-enable)
 
+(use-package meow)
+(meow-setup)
+(meow-global-mode 1)
+
 (use-package ace-window
   :custom
   (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  (aw-background nil)
   :init
   (global-set-key (kbd "M-o") 'ace-window)
 )
