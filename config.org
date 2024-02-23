@@ -200,7 +200,7 @@ Replace the default modeline with a prettier more useful.
 #+end_src
 
 * Development
-** Projectile
+** projectile
 Project interaction library for Emacs.
 #+begin_src emacs-lisp
     (use-package projectile
@@ -288,9 +288,16 @@ Auto-format all the code with one command, regardless of language https://github
 *** Python
 Also note, need to brew-install `ruff-lsp` and make sure it's configured in the eglot section above. 
 #+begin_src emacs-lisp
-(use-package python-pytest) ;; this seems to only work with pytest, not with unittest, not sure about others :\
+(use-package elpy
+  :ensure t
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable)) 
 #+end_src
-
+*** Dockerfiles
+#+begin_src emacs-lisp
+(use-package dockerfile-mode)
+#+end_src
 *** Org Mode
 Org mode is one of the things that emacs is loved for.
 Once you've used it for a bit, you'll understand why people love it. Even reading about it can be inspiring!
@@ -380,6 +387,10 @@ Nice for moving from window to window quickly
   :init
   (global-set-key (kbd "M-o") 'ace-window)
 )
+#+end_src
+** Ripgrep
+#+begin_src emacs-lisp
+(use-package rg)
 #+end_src
 ** Nerd Icons
 For ions and more helpful UI.

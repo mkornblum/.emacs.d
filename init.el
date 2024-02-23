@@ -130,7 +130,13 @@
 
 (use-package format-all)
 
-(use-package python-pytest) ;; this seems to only work with pytest, not with unittest, not sure about others :\
+(use-package elpy
+  :ensure t
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable))
+
+(use-package dockerfile-mode)
 
 (add-hook 'org-mode-hook 'org-indent-mode) ;; Indent text
 
@@ -168,6 +174,8 @@
   :init
   (global-set-key (kbd "M-o") 'ace-window)
 )
+
+(use-package rg)
 
 (use-package nerd-icons
   :if (display-graphic-p))
