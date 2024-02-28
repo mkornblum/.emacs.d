@@ -48,6 +48,7 @@
 (setq scroll-margin 8)
 
 (setq make-backup-files nil) ;; Stop creating ~ backup files
+(setq create-lockfiles nil)
 (setq auto-save-default nil) ;; Stop creating # auto save files
 ;; (setq dired-kill-when-opening-new-dired-buffer t) ;; Dired don't create new buffer
 
@@ -125,16 +126,44 @@
 
 (use-package tree-sitter)
 (use-package tree-sitter-langs)
+(use-package treesit-auto
+  :config
+  (global-treesit-auto-mode))
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 (use-package format-all)
 
-(use-package elpy
-  :ensure t
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable))
+
+
+;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
+(defvar genehack/tsx-treesit-auto-recipe
+  (make-treesit-auto-recipe
+   :lang 'tsx
+   :ts-mode 'tsx-ts-mode
+   :remap '(typescript-tsx-mode)
+   :requires 'typescript
+   :url "https://github.com/tree-sitter/tree-sitter-typescript"
+   :revision "v0.20.3"
+   :source-dir "tsx/src"
+   :ext "\\.tsx\\'")
+  "Recipe for libtree-sitter-tsx.dylib")
+(add-to-list 'treesit-auto-recipe-list genehack/tsx-treesit-auto-recipe)
+
+(defvar genehack/typescript-treesit-auto-recipe
+  (make-treesit-auto-recipe
+   :lang 'typescript
+   :ts-mode 'typescript-ts-mode
+   :remap 'typescript-mode
+   :requires 'tsx
+   :url "https://github.com/tree-sitter/tree-sitter-typescript"
+   :revision "v0.20.3"
+   :source-dir "typescript/src"
+   :ext "\\.ts\\'")
+  "Recipe for libtree-sitter-typescript.dylib")
+(add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
 
 (use-package dockerfile-mode)
 
@@ -158,6 +187,7 @@
 
 ;; (require 'start-multiFileExample)
 (require 'asdf)
+(require 'mk-functions)
 (require 'meow-qwerty)
 
 ;; (start/hello)

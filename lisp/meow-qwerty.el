@@ -21,7 +21,8 @@
    '("0" . meow-digit-argument)
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet)
-   '("p" . projectile-command-map))
+   '("p" . projectile-command-map)
+   '("*" . consult-ripgrep-at-point))
   (meow-normal-define-key
    '("0" . meow-expand-0)
    '("9" . meow-expand-9)

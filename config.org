@@ -131,6 +131,7 @@ With Emacs 29 use-package is now built-in.
     (setq scroll-margin 8)
 
     (setq make-backup-files nil) ;; Stop creating ~ backup files
+    (setq create-lockfiles nil)
     (setq auto-save-default nil) ;; Stop creating # auto save files
     ;; (setq dired-kill-when-opening-new-dired-buffer t) ;; Dired don't create new buffer
 
@@ -277,6 +278,9 @@ From https://emacs-tree-sitter.github.io/
 #+begin_src emacs-lisp
 (use-package tree-sitter)
 (use-package tree-sitter-langs)
+(use-package treesit-auto
+  :config
+  (global-treesit-auto-mode))
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 #+end_src
@@ -288,11 +292,39 @@ Auto-format all the code with one command, regardless of language https://github
 *** Python
 Also note, need to brew-install `ruff-lsp` and make sure it's configured in the eglot section above. 
 #+begin_src emacs-lisp
-(use-package elpy
-  :ensure t
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable)) 
+
+#+end_src
+*** Typescript
+Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/
+#+begin_src emacs-lisp
+;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
+(defvar genehack/tsx-treesit-auto-recipe
+  (make-treesit-auto-recipe
+   :lang 'tsx
+   :ts-mode 'tsx-ts-mode
+   :remap '(typescript-tsx-mode)
+   :requires 'typescript
+   :url "https://github.com/tree-sitter/tree-sitter-typescript"
+   :revision "v0.20.3"
+   :source-dir "tsx/src"
+   :ext "\\.tsx\\'")
+  "Recipe for libtree-sitter-tsx.dylib")
+(add-to-list 'treesit-auto-recipe-list genehack/tsx-treesit-auto-recipe)
+
+(defvar genehack/typescript-treesit-auto-recipe
+  (make-treesit-auto-recipe
+   :lang 'typescript
+   :ts-mode 'typescript-ts-mode
+   :remap 'typescript-mode
+   :requires 'tsx
+   :url "https://github.com/tree-sitter/tree-sitter-typescript"
+   :revision "v0.20.3"
+   :source-dir "typescript/src"
+   :ext "\\.ts\\'")
+  "Recipe for libtree-sitter-typescript.dylib")
+(add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
 #+end_src
 *** Dockerfiles
 #+begin_src emacs-lisp
@@ -357,6 +389,7 @@ Notes:
 #+begin_src emacs-lisp
     ;; (require 'start-multiFileExample)
 (require 'asdf)
+(require 'mk-functions)
 (require 'meow-qwerty)
 #+end_src
 
