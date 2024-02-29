@@ -294,7 +294,7 @@ Also note, need to brew-install `ruff-lsp` and make sure it's configured in the 
 #+begin_src emacs-lisp
 
 #+end_src
-*** Typescript
+*** Typescript and Javascript
 Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/
 #+begin_src emacs-lisp
 ;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
@@ -323,8 +323,12 @@ Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-t
    :ext "\\.ts\\'")
   "Recipe for libtree-sitter-typescript.dylib")
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
+
+(use-package nvm
+  :hook ((tsx-ts-mode . nvm-use-for)
+         (typescript-ts-mode . nvm-use-for)))
 #+end_src
 *** Dockerfiles
 #+begin_src emacs-lisp
@@ -660,7 +664,18 @@ Which-key is a helper utility for keychords (which key to press).
       (which-key-idle-delay 0.8)       ;; Set the time delay (in seconds) for the which-key popup to appear
       (which-key-max-description-length 25))
 #+end_src
-
+** Envrc
+#+begin_src emacs-lisp
+(use-package envrc
+  :init
+  (envrc-global-mode))
+#+end_src
+** Exec path from shell
+#+begin_src emacs-lisp
+    (use-package exec-path-from-shell
+      :init 
+      (exec-path-from-shell-initialize))
+#+end_src
 * Runtime Performance
 Dial the GC threshold back down so that garbage collection happens more frequently but in less time.
 We also increase Read Process Output Max so emacs can read more data.

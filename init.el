@@ -162,8 +162,12 @@
    :ext "\\.ts\\'")
   "Recipe for libtree-sitter-typescript.dylib")
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
-(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
+
+(use-package nvm
+  :hook ((tsx-ts-mode . nvm-use-for)
+         (typescript-ts-mode . nvm-use-for)))
 
 (use-package dockerfile-mode)
 
@@ -372,6 +376,14 @@
   (which-key-min-display-lines 6)  ;; Increase the minimum lines to display, because the default is only 1
   (which-key-idle-delay 0.8)       ;; Set the time delay (in seconds) for the which-key popup to appear
   (which-key-max-description-length 25))
+
+(use-package envrc
+  :init
+  (envrc-global-mode))
+
+(use-package exec-path-from-shell
+  :init 
+  (exec-path-from-shell-initialize))
 
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 2 1000 1000))
