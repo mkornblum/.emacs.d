@@ -166,7 +166,7 @@ With Emacs version 29, true transparency has been added.
 *** Setting fonts
 #+begin_src emacs-lisp
     (set-face-attribute 'default nil
-                        :font "Fira Code" ;; Set your favorite type of font or download JetBrains Mono
+                        :font "Monaco" ;; Set your favorite type of font or download JetBrains Mono
                         :height 130
                         :weight 'medium)
     ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -240,8 +240,8 @@ Use visual block to uncomment easily in Org documents (C-v).
       (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
             eglot-autoshutdown t) ;; Shutdown unused servers.
       ;; Manual lsp servers
-      (add-to-list 'eglot-server-programs
-                   `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+      ;; (add-to-list 'eglot-server-programs
+      ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
       )
 #+end_src
 
@@ -287,12 +287,13 @@ From https://emacs-tree-sitter.github.io/
 *** Format all mode
 Auto-format all the code with one command, regardless of language https://github.com/lassik/emacs-format-all-the-code
 #+begin_src emacs-lisp
-(use-package format-all)
+(use-package format-all
+  :hook (prog-mode . format-all-mode))
 #+end_src
 *** Python
 Also note, need to brew-install `ruff-lsp` and make sure it's configured in the eglot section above. 
 #+begin_src emacs-lisp
-
+(use-package python-pytest)
 #+end_src
 *** Typescript and Javascript
 Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/

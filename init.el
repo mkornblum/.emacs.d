@@ -70,7 +70,7 @@
 (add-to-list 'default-frame-alist '(alpha-background . 90)) ;; For all new frames henceforth
 
 (set-face-attribute 'default nil
-                    :font "Fira Code" ;; Set your favorite type of font or download JetBrains Mono
+                    :font "Monaco" ;; Set your favorite type of font or download JetBrains Mono
                     :height 130
                     :weight 'medium)
 ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -111,8 +111,8 @@
   (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
         eglot-autoshutdown t) ;; Shutdown unused servers.
   ;; Manual lsp servers
-  (add-to-list 'eglot-server-programs
-               `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+  ;; (add-to-list 'eglot-server-programs
+  ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
   )
 
 (use-package flycheck
@@ -132,9 +132,10 @@
 (global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
-(use-package format-all)
+(use-package format-all
+  :hook (prog-mode . format-all-mode))
 
-
+(use-package python-pytest)
 
 ;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
 (defvar genehack/tsx-treesit-auto-recipe
