@@ -42,6 +42,7 @@
 (global-auto-revert-mode t)          ;; Automatically reload file and show changes if the file has changed
 (global-display-line-numbers-mode 1) ;; Display line numbers
 (global-visual-line-mode t)          ;; Enable truncated lines
+(winner-mode 1)  ;; enable winner mode for better help + pop up management
 
 (setq mouse-wheel-progressive-speed nil) ;; Disable progressive speed when scrolling
 (setq scroll-conservatively 10)          ;; Smooth scrolling when going down with scroll margin
@@ -198,9 +199,11 @@
 ;; (start/hello)
 (asdf-enable)
 
-(use-package meow)
-(meow-setup)
-(meow-global-mode 1)
+(use-package meow
+  :config
+  (add-to-list 'meow-mode-state-list '(git-commit-mode . insert))
+  (meow-setup)
+  (meow-global-mode 1))
 
 (use-package ace-window
   :custom
@@ -222,7 +225,9 @@
   :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
 
 (use-package magit
-  :commands magit-status)
+  :commands magit-status
+  ;; why doesn't this work? :hook (git-commit-setup-hook . meow-insert-mode)
+)
 
 (use-package diff-hl
   :hook ((magit-pre-refresh-hook . diff-hl-magit-pre-refresh)

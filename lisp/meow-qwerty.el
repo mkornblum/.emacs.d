@@ -22,6 +22,7 @@
    '("/" . meow-keypad-describe-key)
    '("?" . meow-cheatsheet)
    '("p" . projectile-command-map)
+   '("f" . find-file-or-projectile)
    '("*" . consult-ripgrep-at-point))
   (meow-normal-define-key
    '("0" . meow-expand-0)

@@ -125,6 +125,7 @@ With Emacs 29 use-package is now built-in.
     (global-auto-revert-mode t)          ;; Automatically reload file and show changes if the file has changed
     (global-display-line-numbers-mode 1) ;; Display line numbers
     (global-visual-line-mode t)          ;; Enable truncated lines
+    (winner-mode 1)  ;; enable winner mode for better help + pop up management
 
     (setq mouse-wheel-progressive-speed nil) ;; Disable progressive speed when scrolling
     (setq scroll-conservatively 10)          ;; Smooth scrolling when going down with scroll margin
@@ -411,9 +412,11 @@ All the package setups that don't need much tweaking.
 Let's try modal editing again, but be even more esoteric than evil/vim! See keybindings
 above provided by "meow-qwerty".
 #+begin_src emacs-lisp
-(use-package meow)
-(meow-setup)
-(meow-global-mode 1)
+(use-package meow
+  :config
+  (add-to-list 'meow-mode-state-list '(git-commit-mode . insert))
+  (meow-setup)
+  (meow-global-mode 1))
 #+end_src
 ** Ace Window
 Nice for moving from window to window quickly
@@ -454,7 +457,9 @@ While nerd-icons supports both GUI and TUI.
 Complete text-based user interface to Git.
 #+begin_src emacs-lisp
     (use-package magit
-      :commands magit-status)
+      :commands magit-status
+      ;; why doesn't this work? :hook (git-commit-setup-hook . meow-insert-mode)
+    )
 #+end_src
 
 *** Diff-hl
