@@ -63,6 +63,7 @@
 (global-set-key [escape] 'keyboard-escape-quit) ;; Makes Escape quit prompts (Minibuffer Escape)
 (blink-cursor-mode 0) ;; Don't blink cursor
 (add-hook 'prog-mode-hook (lambda () (hs-minor-mode t))) ;; Enable folding hide/show globally
+(global-auto-revert-mode 1)
 
 (use-package gruvbox-theme
   :config
@@ -105,16 +106,25 @@
 ;; Use Bookmarks for smaller, not standard projects
 
 (use-package eglot
-  :ensure nil ;; Don't install eglot because it's now built-in
-  :hook (('python-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-  :config
-  ;; Good default
-  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-        eglot-autoshutdown t) ;; Shutdown unused servers.
-  ;; Manual lsp servers
-  ;; (add-to-list 'eglot-server-programs
-  ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-  )
+          :ensure nil ;; Don't install eglot because it's now built-in
+          :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+          :config
+          ;; Good default
+          (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+                eglot-autoshutdown t) ;; Shutdown unused servers.
+          ;; Manual lsp servers
+          ;; (add-to-list 'eglot-server-programs
+          ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+          )
+
+(defun pyvenv-autoload ()
+          (interactive)
+          "auto activate venv directory if exists"
+          (f-traverse-upwards (lambda (path)
+              (let ((venv-path (f-expand "venv" path)))
+              (when (f-exists? venv-path)
+              (pyvenv-activate venv-path))))))
+(add-hook 'python-ts-mode-hook 'pyvenv-autoload)
 
 (use-package flycheck
   :ensure t
@@ -125,6 +135,11 @@
   :custom (yas-snippet-dirs '("~/.config/emacs/snippets"))
   :hook (prog-mode . yas-minor-mode))
 
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
 (use-package tree-sitter)
 (use-package tree-sitter-langs)
 (use-package treesit-auto
@@ -134,9 +149,15 @@
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 (use-package format-all
-  :hook (prog-mode . format-all-mode))
+  :hook (prog-mode . format-all-mode)
+  :config
+  (setq-default format-all-formatters
+                '(("Python" (ruff "format"))))
+)
 
 (use-package python-pytest)
+(use-package cython-mode)
+(add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
 
 ;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
 (defvar genehack/tsx-treesit-auto-recipe
@@ -166,10 +187,6 @@
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
 (add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
-
-(use-package nvm
-  :hook ((tsx-ts-mode . nvm-use-for)
-         (typescript-ts-mode . nvm-use-for)))
 
 (use-package dockerfile-mode)
 
@@ -228,6 +245,8 @@
   :commands magit-status
   ;; why doesn't this work? :hook (git-commit-setup-hook . meow-insert-mode)
 )
+;; attempt to use minibuffer for pinentry when signing commits with gpg
+(setq epg-pinentry-mode 'loopback)
 
 (use-package diff-hl
   :hook ((magit-pre-refresh-hook . diff-hl-magit-pre-refresh)
@@ -364,6 +383,42 @@
    ;;;; 5. No project support
   ;; (setq consult-project-function nil)
   )
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package diminish)
 

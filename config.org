@@ -146,6 +146,7 @@ With Emacs 29 use-package is now built-in.
     (global-set-key [escape] 'keyboard-escape-quit) ;; Makes Escape quit prompts (Minibuffer Escape)
     (blink-cursor-mode 0) ;; Don't blink cursor
     (add-hook 'prog-mode-hook (lambda () (hs-minor-mode t))) ;; Enable folding hide/show globally
+    (global-auto-revert-mode 1)
 #+end_src
 
 * Appearance
@@ -233,17 +234,26 @@ Or add the lua-language-server executable to your path.
 If you can use a package manager just install the lsp server and add a hook.
 Use visual block to uncomment easily in Org documents (C-v).
 #+begin_src emacs-lisp
-    (use-package eglot
-      :ensure nil ;; Don't install eglot because it's now built-in
-      :hook (('python-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-      :config
-      ;; Good default
-      (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-            eglot-autoshutdown t) ;; Shutdown unused servers.
-      ;; Manual lsp servers
-      ;; (add-to-list 'eglot-server-programs
-      ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-      )
+        (use-package eglot
+          :ensure nil ;; Don't install eglot because it's now built-in
+          :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+          :config
+          ;; Good default
+          (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+                eglot-autoshutdown t) ;; Shutdown unused servers.
+          ;; Manual lsp servers
+          ;; (add-to-list 'eglot-server-programs
+          ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+          )
+
+(defun pyvenv-autoload ()
+          (interactive)
+          "auto activate venv directory if exists"
+          (f-traverse-upwards (lambda (path)
+              (let ((venv-path (f-expand "venv" path)))
+              (when (f-exists? venv-path)
+              (pyvenv-activate venv-path))))))
+(add-hook 'python-ts-mode-hook 'pyvenv-autoload)
 #+end_src
 
 ** Flycheck
@@ -262,6 +272,15 @@ To use it write out the full keyword (or use autocompletion) and press Tab.
     (use-package yasnippet-snippets
       :custom (yas-snippet-dirs '("~/.config/emacs/snippets"))
       :hook (prog-mode . yas-minor-mode))
+#+end_src
+
+** Editor Config
+play nicely with project config even when other people use a different editor
+#+begin_src emacs-lisp
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
 #+end_src
 
 ** Language modes
@@ -289,12 +308,17 @@ From https://emacs-tree-sitter.github.io/
 Auto-format all the code with one command, regardless of language https://github.com/lassik/emacs-format-all-the-code
 #+begin_src emacs-lisp
 (use-package format-all
-  :hook (prog-mode . format-all-mode))
+  :hook (prog-mode . format-all-mode)
+  :config
+  (setq-default format-all-formatters
+                '(("Python" (ruff "format"))))
+)
 #+end_src
 *** Python
-Also note, need to brew-install `ruff-lsp` and make sure it's configured in the eglot section above. 
 #+begin_src emacs-lisp
 (use-package python-pytest)
+(use-package cython-mode)
+(add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
 #+end_src
 *** Typescript and Javascript
 Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/
@@ -327,10 +351,6 @@ Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-t
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
 (add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
-
-(use-package nvm
-  :hook ((tsx-ts-mode . nvm-use-for)
-         (typescript-ts-mode . nvm-use-for)))
 #+end_src
 *** Dockerfiles
 #+begin_src emacs-lisp
@@ -460,6 +480,8 @@ Complete text-based user interface to Git.
       :commands magit-status
       ;; why doesn't this work? :hook (git-commit-setup-hook . meow-insert-mode)
     )
+    ;; attempt to use minibuffer for pinentry when signing commits with gpg
+    (setq epg-pinentry-mode 'loopback)
 #+end_src
 
 *** Diff-hl
@@ -638,6 +660,46 @@ Check out their [[https://github.com/minad/consult][git repository]] for more aw
        ;;;; 5. No project support
       ;; (setq consult-project-function nil)
       )
+#+end_src
+
+** Embark 
+I found I missed this after a while, so adding it back again 
+#+begin_src emacs-lisp
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
 ** Diminish
