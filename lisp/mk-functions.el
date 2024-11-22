@@ -1,6 +1,10 @@
 (defun consult-ripgrep-at-point ()
   (interactive)
-  (consult-ripgrep (projectile-project-root) (thing-at-point 'symbol)))
+  (let* ((default-directory (or (projectile-project-root) default-directory))
+     (directory (read-directory-name "Search in directory: " default-directory))
+     (thing (thing-at-point 'symbol)))
+  (consult-ripgrep directory thing)))
+
 
 (defun find-file-or-projectile ()
   (interactive)

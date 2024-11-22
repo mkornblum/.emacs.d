@@ -234,26 +234,17 @@ Or add the lua-language-server executable to your path.
 If you can use a package manager just install the lsp server and add a hook.
 Use visual block to uncomment easily in Org documents (C-v).
 #+begin_src emacs-lisp
-        (use-package eglot
-          :ensure nil ;; Don't install eglot because it's now built-in
-          :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-          :config
-          ;; Good default
-          (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-                eglot-autoshutdown t) ;; Shutdown unused servers.
-          ;; Manual lsp servers
-          ;; (add-to-list 'eglot-server-programs
-          ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-          )
-
-(defun pyvenv-autoload ()
-          (interactive)
-          "auto activate venv directory if exists"
-          (f-traverse-upwards (lambda (path)
-              (let ((venv-path (f-expand "venv" path)))
-              (when (f-exists? venv-path)
-              (pyvenv-activate venv-path))))))
-(add-hook 'python-ts-mode-hook 'pyvenv-autoload)
+    (use-package eglot
+      :ensure nil ;; Don't install eglot because it's now built-in
+      :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+      :config
+      ;; Good default
+      (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+            eglot-autoshutdown t) ;; Shutdown unused servers.
+      ;; Manual lsp servers
+      ;; (add-to-list 'eglot-server-programs
+      ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+      )
 #+end_src
 
 ** Flycheck
@@ -282,7 +273,18 @@ play nicely with project config even when other people use a different editor
   :config
   (editorconfig-mode 1))
 #+end_src
-
+** Envrc
+#+begin_src emacs-lisp
+(use-package envrc
+  :init
+  (envrc-global-mode))
+#+end_src
+** Exec path from shell
+#+begin_src emacs-lisp
+    (use-package exec-path-from-shell
+      :init 
+      (exec-path-from-shell-initialize))
+#+end_src
 ** Language modes
 It's not required for every language like C,C++,C#,Java,Javascript etc. to install language mode packages,
 but for more specific languages it is necessary for syntax highlighting.
@@ -316,9 +318,24 @@ Auto-format all the code with one command, regardless of language https://github
 #+end_src
 *** Python
 #+begin_src emacs-lisp
-(use-package python-pytest)
-(use-package cython-mode)
-(add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
+    (use-package python-pytest)
+    (use-package cython-mode)
+    (add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
+
+    ;; try commenting this pyvenv stuff because pet supposedly does it
+    ;; (defun pyvenv-autoload ()
+        ;;   (interactive)
+        ;;   "auto activate venv directory if exists"
+        ;;   (f-traverse-upwards (lambda (path)
+        ;;                         (let ((venv-path (f-expand "venv" path)))
+        ;;                           (when (f-exists? venv-path)
+        ;;                             (pyvenv-activate venv-path))))))
+        ;; (add-hook 'python-ts-mode-hook 'pyvenv-autoload)
+
+    ;; pet package suggested on reddit here https://www.reddit.com/r/emacs/comments/1e1nz44/comment/lcx3h7q
+    (use-package pet
+      :config
+      (add-hook 'python-base-mode-hook 'pet-mode -10))
 #+end_src
 *** Typescript and Javascript
 Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/
@@ -732,18 +749,14 @@ Which-key is a helper utility for keychords (which key to press).
       (which-key-idle-delay 0.8)       ;; Set the time delay (in seconds) for the which-key popup to appear
       (which-key-max-description-length 25))
 #+end_src
-** Envrc
+
+** Htmlize
+https://github.com/hniksic/emacs-htmlize
+installed this mostly to make org-mode HTML exports nicer, but maybe it will be useful for other things too?
 #+begin_src emacs-lisp
-(use-package envrc
-  :init
-  (envrc-global-mode))
+(use-package htmlize)
 #+end_src
-** Exec path from shell
-#+begin_src emacs-lisp
-    (use-package exec-path-from-shell
-      :init 
-      (exec-path-from-shell-initialize))
-#+end_src
+
 * Runtime Performance
 Dial the GC threshold back down so that garbage collection happens more frequently but in less time.
 We also increase Read Process Output Max so emacs can read more data.

@@ -106,25 +106,16 @@
 ;; Use Bookmarks for smaller, not standard projects
 
 (use-package eglot
-          :ensure nil ;; Don't install eglot because it's now built-in
-          :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-          :config
-          ;; Good default
-          (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-                eglot-autoshutdown t) ;; Shutdown unused servers.
-          ;; Manual lsp servers
-          ;; (add-to-list 'eglot-server-programs
-          ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-          )
-
-(defun pyvenv-autoload ()
-          (interactive)
-          "auto activate venv directory if exists"
-          (f-traverse-upwards (lambda (path)
-              (let ((venv-path (f-expand "venv" path)))
-              (when (f-exists? venv-path)
-              (pyvenv-activate venv-path))))))
-(add-hook 'python-ts-mode-hook 'pyvenv-autoload)
+  :ensure nil ;; Don't install eglot because it's now built-in
+  :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+  :config
+  ;; Good default
+  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+        eglot-autoshutdown t) ;; Shutdown unused servers.
+  ;; Manual lsp servers
+  ;; (add-to-list 'eglot-server-programs
+  ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
+  )
 
 (use-package flycheck
   :ensure t
@@ -139,6 +130,14 @@
   :ensure t
   :config
   (editorconfig-mode 1))
+
+(use-package envrc
+  :init
+  (envrc-global-mode))
+
+(use-package exec-path-from-shell
+  :init 
+  (exec-path-from-shell-initialize))
 
 (use-package tree-sitter)
 (use-package tree-sitter-langs)
@@ -158,6 +157,21 @@
 (use-package python-pytest)
 (use-package cython-mode)
 (add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
+
+;; try commenting this pyvenv stuff because pet supposedly does it
+;; (defun pyvenv-autoload ()
+    ;;   (interactive)
+    ;;   "auto activate venv directory if exists"
+    ;;   (f-traverse-upwards (lambda (path)
+    ;;                         (let ((venv-path (f-expand "venv" path)))
+    ;;                           (when (f-exists? venv-path)
+    ;;                             (pyvenv-activate venv-path))))))
+    ;; (add-hook 'python-ts-mode-hook 'pyvenv-autoload)
+
+;; pet package suggested on reddit here https://www.reddit.com/r/emacs/comments/1e1nz44/comment/lcx3h7q
+(use-package pet
+  :config
+  (add-hook 'python-base-mode-hook 'pet-mode -10))
 
 ;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
 (defvar genehack/tsx-treesit-auto-recipe
@@ -438,13 +452,7 @@
   (which-key-idle-delay 0.8)       ;; Set the time delay (in seconds) for the which-key popup to appear
   (which-key-max-description-length 25))
 
-(use-package envrc
-  :init
-  (envrc-global-mode))
-
-(use-package exec-path-from-shell
-  :init 
-  (exec-path-from-shell-initialize))
+(use-package htmlize)
 
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 2 1000 1000))
