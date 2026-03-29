@@ -10,8 +10,8 @@
 - [[#important-to-load-first][Important to load first]]
   - [[#startup-performance][Startup Performance]]
   - [[#auto-tangle-configuration-file][Auto-tangle Configuration file]]
+  - [[#set-user-info][Set user info]]
   - [[#use-package][Use Package]]
-  - [[#general-keybindings][General Keybindings]]
   - [[#good-defaults][Good Defaults]]
 - [[#appearance][Appearance]]
   - [[#set-theme][Set Theme]]
@@ -19,17 +19,27 @@
   - [[#fonts][Fonts]]
   - [[#modeline][Modeline]]
 - [[#development][Development]]
-  - [[#projectile][Projectile]]
+  - [[#projectile][projectile]]
   - [[#eglot][Eglot]]
+  - [[#flycheck][Flycheck]]
   - [[#yasnippet][Yasnippet]]
+  - [[#editor-config][Editor Config]]
+  - [[#envrc][Envrc]]
+  - [[#exec-path-from-shell][Exec path from shell]]
+  - [[#mise][Mise]]
   - [[#language-modes][Language modes]]
+  - [[#debugging][Debugging]]
   - [[#terminal][Terminal]]
+  - [[#llm-support][LLM Support]]
+  - [[#utilities-and-polish][Utilities and polish]]
 - [[#multi-file-example][Multi File Example]]
   - [[#adding-the-lisp-directory-to-load-path][Adding the lisp directory to load-path]]
   - [[#sourcing-the-files][Sourcing the files]]
   - [[#using-the-file][Using the file]]
 - [[#other-packages][Other Packages]]
-  - Ace Window
+  - [[#meow][Meow]]
+  - [[#ace-window][Ace Window]]
+  - [[#ripgrep][Ripgrep]]
   - [[#nerd-icons][Nerd Icons]]
   - [[#git][Git]]
   - [[#corfu][Corfu]]
@@ -37,9 +47,11 @@
   - [[#orderless][Orderless]]
   - [[#vertico-and-marginalia][Vertico and Marginalia]]
   - [[#consult][Consult]]
+  - [[#embark][Embark]]
   - [[#diminish][Diminish]]
   - [[#rainbow-delimiters][Rainbow Delimiters]]
   - [[#which-key][Which-Key]]
+  - [[#htmlize][Htmlize]]
 - [[#runtime-performance][Runtime Performance]]
 
 * Introduction
@@ -105,6 +117,7 @@ With Emacs 29 use-package is now built-in.
 #+begin_src emacs-lisp
     (require 'use-package-ensure) ;; Load use-package-always-ensure
     (setq use-package-always-ensure t) ;; Always ensures that a package is installed
+    (setq use-package-verbose t)
     (setq package-archives '(("melpa" . "https://melpa.org/packages/") ;; Sets default package repositories
                              ("org" . "https://orgmode.org/elpa/")
                              ("elpa" . "https://elpa.gnu.org/packages/")
@@ -139,6 +152,9 @@ With Emacs 29 use-package is now built-in.
     (setq org-edit-src-content-indentation 4) ;; Set src block automatic indent to 4 instead of 2.
     (setq-default tab-width 4)
 
+    (setq mac-command-modifier 'meta)
+    (setq frame-resize-pixelwise t) ;; try to fix window resizing weirdness on macos
+
     ;; Move customization variables to a separate file and load it, avoid filling up init.el with unnecessary variables
     (setq custom-file (locate-user-emacs-file "custom-vars.el"))
     (load custom-file 'noerror 'nomessage)
@@ -151,11 +167,10 @@ With Emacs 29 use-package is now built-in.
 
 * Appearance
 ** Set Theme
-Set gruvbox theme, if you want some themes try out doom-themes.
 #+begin_src emacs-lisp
-    (use-package gruvbox-theme
-      :config
-      (load-theme 'gruvbox-light-medium t)) ;; We need to add t to trust this package
+(use-package nord-theme
+  :config
+  (load-theme 'nord t))
 #+end_src
 
 ** Transparency
@@ -168,7 +183,7 @@ With Emacs version 29, true transparency has been added.
 *** Setting fonts
 #+begin_src emacs-lisp
     (set-face-attribute 'default nil
-                        :font "Monaco" ;; Set your favorite type of font or download JetBrains Mono
+                        :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
                         :height 130
                         :weight 'medium)
     ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -211,7 +226,7 @@ Project interaction library for Emacs.
       (projectile-mode)
       :custom
       (projectile-run-use-comint-mode t) ;; Interactive run dialog when running projects inside emacs (like giving input)
-      (projectile-switch-project-action #'projectile-dired)
+      (projectile-switch-project-action #'projectile-vc)
       (projectile-project-search-path '(("~/code" . 1)))) ;; . 1 means only search the first subdirectory level for projects
     ;; Use Bookmarks for smaller, not standard projects
 #+end_src
@@ -235,16 +250,23 @@ If you can use a package manager just install the lsp server and add a hook.
 Use visual block to uncomment easily in Org documents (C-v).
 #+begin_src emacs-lisp
     (use-package eglot
-      :ensure nil ;; Don't install eglot because it's now built-in
-      :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-      :config
-      ;; Good default
-      (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-            eglot-autoshutdown t) ;; Shutdown unused servers.
-      ;; Manual lsp servers
-      ;; (add-to-list 'eglot-server-programs
-      ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-      )
+               :ensure nil ;; Don't install eglot because it's now built-in
+               :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+               :config
+               ;; Good default
+               (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+                     eglot-autoshutdown t ;; Shutdown unused servers.
+                     eglot-sync-connect nil ;; Don't block while starting server
+                     eglot-extend-to-xref nil) ;; Don't auto-expand all references 
+
+                   ;; Disable resource-heavy features for faster startup
+               (setq eglot-ignored-server-capabilities  
+                     '(:hoverProvider ;; Can re-enable if you use hover docs 
+                       :inlayHintProvider)) ;; Don't show inline hints by default
+                   ;; Manual lsp servers
+                   ;; (add-to-list 'eglot-server-programs
+                   ;;              `((python-mode python-ts-mode) . ("ruff-lsp")))
+    )
 #+end_src
 
 ** Flycheck
@@ -264,7 +286,6 @@ To use it write out the full keyword (or use autocompletion) and press Tab.
       :custom (yas-snippet-dirs '("~/.config/emacs/snippets"))
       :hook (prog-mode . yas-minor-mode))
 #+end_src
-
 ** Editor Config
 play nicely with project config even when other people use a different editor
 #+begin_src emacs-lisp
@@ -275,16 +296,25 @@ play nicely with project config even when other people use a different editor
 #+end_src
 ** Envrc
 #+begin_src emacs-lisp
-(use-package envrc
-  :init
-  (envrc-global-mode))
+    ;; (use-package envrc
+    ;;   :init
+    ;;   (envrc-global-mode))
 #+end_src
 ** Exec path from shell
 #+begin_src emacs-lisp
     (use-package exec-path-from-shell
-      :init 
+      :config
+      (dolist (var '("JIRA_API_TOKEN"))
+        (add-to-list 'exec-path-from-shell-variables var))
       (exec-path-from-shell-initialize))
 #+end_src
+** Mise
+asdf but written in Rust
+#+BEGIN_SRC emacs-lisp
+(use-package mise
+  :init
+  (global-mise-mode))
+#+END_SRC
 ** Language modes
 It's not required for every language like C,C++,C#,Java,Javascript etc. to install language mode packages,
 but for more specific languages it is necessary for syntax highlighting.
@@ -296,32 +326,29 @@ Use SPC-tab to uncomment the lines.
 #       :mode "\\.lua\\'") ;; Only start in a lua file
 # #+end_src
 *** Tree-sitter
-From https://emacs-tree-sitter.github.io/
+Using Emacs 29+ built-in treesit via treesit-auto.
 #+begin_src emacs-lisp
-(use-package tree-sitter)
-(use-package tree-sitter-langs)
 (use-package treesit-auto
   :config
   (global-treesit-auto-mode))
-(global-tree-sitter-mode)
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 #+end_src
 *** Format all mode
 Auto-format all the code with one command, regardless of language https://github.com/lassik/emacs-format-all-the-code
 #+begin_src emacs-lisp
-(use-package format-all
-  :hook (prog-mode . format-all-mode)
-  :config
-  (setq-default format-all-formatters
-                '(("Python" (ruff "format"))))
-)
+    (use-package format-all
+      :hook (prog-mode . format-all-mode)
+      :config
+      (setq-default format-all-formatters
+                    '(("Python" (ruff "format"))
+                      ("Typescript" prettier)))
+    )
 #+end_src
 *** Python
 #+begin_src emacs-lisp
     (use-package python-pytest)
     (use-package cython-mode)
     (add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
-
+    (setq-default flycheck-disabled-checkers '(python-mypy))
     ;; try commenting this pyvenv stuff because pet supposedly does it
     ;; (defun pyvenv-autoload ()
         ;;   (interactive)
@@ -333,9 +360,9 @@ Auto-format all the code with one command, regardless of language https://github
         ;; (add-hook 'python-ts-mode-hook 'pyvenv-autoload)
 
     ;; pet package suggested on reddit here https://www.reddit.com/r/emacs/comments/1e1nz44/comment/lcx3h7q
-    (use-package pet
-      :config
-      (add-hook 'python-base-mode-hook 'pet-mode -10))
+    ;; (use-package pet
+    ;;   :config
+    ;;   (add-hook 'python-base-mode-hook 'pet-mode -10))
 #+end_src
 *** Typescript and Javascript
 Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-ts-mode-problem/
@@ -368,6 +395,11 @@ Treesitter TS fix via https://genehack.blog/2024/02/fixing-an-emacs-typescript-t
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
 (add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
+ (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '((typescript-mode typescript-ts-mode tsx-ts-mode) .
+                   ("env" "NODE_OPTIONS=--max-old-space-size=8192"
+                    "typescript-language-server" "--stdio"))))
 #+end_src
 *** Dockerfiles
 #+begin_src emacs-lisp
@@ -406,6 +438,62 @@ Org-tempo allows for '<s' followed by TAB to expand to a begin_src tag.
       (require 'org-tempo))
 #+end_src
 
+*** Markdown 
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "pandoc")
+  :bind (:map markdown-mode-map
+         ("C-c C-e" . markdown-do)))
+#+end_src
+** Debugging
+*** Dape
+#+BEGIN_SRC emacs-lisp
+(use-package dape
+  ;; :preface
+  ;; By default dape shares the same keybinding prefix as `gud'
+  ;; If you do not want to use any prefix, set it to nil.
+  ;; (setq dape-key-prefix "\C-x\C-a")
+
+  ;;  :hook
+  ;; Save breakpoints on quit
+  ;; (kill-emacs . dape-breakpoint-save)
+  ;; Load breakpoints on startup
+  ;; (after-init . dape-breakpoint-load)
+
+  ;;:config
+  ;; Turn on global bindings for setting breakpoints with mouse
+  ;; (dape-breakpoint-global-mode)
+
+  ;; Info buffers to the right
+  ;; (setq dape-buffer-window-arrangement 'right)
+
+  ;; Info buffers like gud (gdb-mi)
+  ;; (setq dape-buffer-window-arrangement 'gud)
+  ;; (setq dape-info-hide-mode-line nil)
+
+  ;; Pulse source line (performance hit)
+  ;; (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+
+  ;; Showing inlay hints
+  ;; (setq dape-inlay-hints t)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  ;; (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
+
+  ;; Kill compile buffer on build success
+  ;; (add-hook 'dape-compile-hook 'kill-buffer)
+
+    ;; Projectile users
+   ;; (setq dape-cwd-function 'projectile-project-root)
+)
+
+;; Enable repeat mode for more ergonomic `dape' use
+;; (use-package repeat
+  ;; :config
+;;   (repeat-mode))
+#+END_SRC
 ** Terminal
 *** Eat
 Eat(Emulate A Terminal) is a terminal emulator within Emacs.
@@ -413,8 +501,35 @@ It's more portable and less overhead for users over like vterm or eshell.
 We setup eat with eshell, if you want to use bash, zsh etc., check out their git [[https://codeberg.org/akib/emacs-eat][repository]] how to do it.
 #+begin_src emacs-lisp
     (use-package eat
-      :hook ('eshell-load-hook #'eat-eshell-mode))
+      :config (setq eat-term-name "xterm-256color") (setq explicit-zsh-args '("--login" "--interactive"))
+      :hook (('eshell-load-hook #'eat-eshell-mode)
+    		 (eat-mode . (lambda () (display-line-numbers-mode -1)()))))
 #+end_src
+** LLM Support
+*** Claude Code IDE 
+#+begin_src emacs-lisp 
+    ;; (use-package websocket
+    ;;   :ensure t)
+    ;; (use-package claude-code-ide
+    ;;     :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev "anti-flicker-fixes")
+    ;;     :bind ("C-c C-'" . claude-code-ide-menu)
+    ;;     :config (claude-code-ide-emacs-tools-setup)
+    ;;             (setq claude-code-ide-terminal-backend 'eat))
+
+(use-package agent-shell
+  :ensure t
+  :bind (:map agent-shell-mode-map
+              ("RET" . newline)
+              ("C-RET" . shell-maker-submit))
+)
+#+end_src
+** Utilities and polish 
+#+begin_src emacs-lisp
+(use-package revert-buffer-all
+  :commands (revert-buffer-all))
+#+end_src
+
+
 * Multi File Example
 ** Adding the lisp directory to load-path
 Adds the lisp directory to emacs's load path to search for elisp files.
@@ -431,7 +546,7 @@ Notes:
 - When naming elisp files, functions, it is recommended to use a group name (e.g init-, start- or any custom name), so it does not get mixed up with other names, functions.
 #+begin_src emacs-lisp
     ;; (require 'start-multiFileExample)
-(require 'asdf)
+;; (require 'asdf)
 (require 'mk-functions)
 (require 'meow-qwerty)
 #+end_src
@@ -440,7 +555,7 @@ Notes:
 And now we can use everything from that file.
 #+begin_src emacs-lisp
     ;; (start/hello)
-(asdf-enable)
+;; (asdf-enable)
 #+end_src
 
 * Other Packages
@@ -452,6 +567,7 @@ above provided by "meow-qwerty".
 (use-package meow
   :config
   (add-to-list 'meow-mode-state-list '(git-commit-mode . insert))
+  (add-to-list 'meow-mode-state-list `(eat-mode . insert))
   (meow-setup)
   (meow-global-mode 1))
 #+end_src
@@ -756,6 +872,7 @@ installed this mostly to make org-mode HTML exports nicer, but maybe it will be 
 #+begin_src emacs-lisp
 (use-package htmlize)
 #+end_src
+
 
 * Runtime Performance
 Dial the GC threshold back down so that garbage collection happens more frequently but in less time.

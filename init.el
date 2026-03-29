@@ -25,6 +25,7 @@
 
 (require 'use-package-ensure) ;; Load use-package-always-ensure
 (setq use-package-always-ensure t) ;; Always ensures that a package is installed
+(setq use-package-verbose t)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/") ;; Sets default package repositories
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")
@@ -56,6 +57,9 @@
 (setq org-edit-src-content-indentation 4) ;; Set src block automatic indent to 4 instead of 2.
 (setq-default tab-width 4)
 
+(setq mac-command-modifier 'meta)
+(setq frame-resize-pixelwise t) ;; try to fix window resizing weirdness on macos
+
 ;; Move customization variables to a separate file and load it, avoid filling up init.el with unnecessary variables
 (setq custom-file (locate-user-emacs-file "custom-vars.el"))
 (load custom-file 'noerror 'nomessage)
@@ -65,14 +69,14 @@
 (add-hook 'prog-mode-hook (lambda () (hs-minor-mode t))) ;; Enable folding hide/show globally
 (global-auto-revert-mode 1)
 
-(use-package gruvbox-theme
+(use-package nord-theme
   :config
-  (load-theme 'gruvbox-light-medium t)) ;; We need to add t to trust this package
+  (load-theme 'nord t))
 
 (add-to-list 'default-frame-alist '(alpha-background . 90)) ;; For all new frames henceforth
 
 (set-face-attribute 'default nil
-                    :font "Monaco" ;; Set your favorite type of font or download JetBrains Mono
+                    :font "JetBrains Mono" ;; Set your favorite type of font or download JetBrains Mono
                     :height 130
                     :weight 'medium)
 ;; This sets the default font on all graphical frames created after restarting Emacs.
@@ -101,21 +105,28 @@
   (projectile-mode)
   :custom
   (projectile-run-use-comint-mode t) ;; Interactive run dialog when running projects inside emacs (like giving input)
-  (projectile-switch-project-action #'projectile-dired)
+  (projectile-switch-project-action #'projectile-vc)
   (projectile-project-search-path '(("~/code" . 1)))) ;; . 1 means only search the first subdirectory level for projects
 ;; Use Bookmarks for smaller, not standard projects
 
 (use-package eglot
-  :ensure nil ;; Don't install eglot because it's now built-in
-  :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
-  :config
-  ;; Good default
-  (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
-        eglot-autoshutdown t) ;; Shutdown unused servers.
-  ;; Manual lsp servers
-  ;; (add-to-list 'eglot-server-programs
-  ;;              `((python-mode python-ts-mode) . ("ruff-lsp"))) 
-  )
+           :ensure nil ;; Don't install eglot because it's now built-in
+           :hook (('python-ts-mode . 'eglot-ensure)) ;; Autostart lsp servers for a given mode
+           :config
+           ;; Good default
+           (setq eglot-events-buffer-size 0 ;; No event buffers (Lsp server logs)
+                 eglot-autoshutdown t ;; Shutdown unused servers.
+                 eglot-sync-connect nil ;; Don't block while starting server
+                 eglot-extend-to-xref nil) ;; Don't auto-expand all references 
+
+               ;; Disable resource-heavy features for faster startup
+           (setq eglot-ignored-server-capabilities  
+                 '(:hoverProvider ;; Can re-enable if you use hover docs 
+                   :inlayHintProvider)) ;; Don't show inline hints by default
+               ;; Manual lsp servers
+               ;; (add-to-list 'eglot-server-programs
+               ;;              `((python-mode python-ts-mode) . ("ruff-lsp")))
+)
 
 (use-package flycheck
   :ensure t
@@ -131,33 +142,36 @@
   :config
   (editorconfig-mode 1))
 
-(use-package envrc
-  :init
-  (envrc-global-mode))
+;; (use-package envrc
+;;   :init
+;;   (envrc-global-mode))
 
 (use-package exec-path-from-shell
-  :init 
+  :config
+  (dolist (var '("JIRA_API_TOKEN"))
+    (add-to-list 'exec-path-from-shell-variables var))
   (exec-path-from-shell-initialize))
 
-(use-package tree-sitter)
-(use-package tree-sitter-langs)
+(use-package mise
+  :init
+  (global-mise-mode))
+
 (use-package treesit-auto
   :config
   (global-treesit-auto-mode))
-(global-tree-sitter-mode)
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
 (use-package format-all
   :hook (prog-mode . format-all-mode)
   :config
   (setq-default format-all-formatters
-                '(("Python" (ruff "format"))))
+                '(("Python" (ruff "format"))
+                  ("Typescript" prettier)))
 )
 
 (use-package python-pytest)
 (use-package cython-mode)
 (add-to-list 'auto-mode-alist '("\\.\\(pyx\\)\\'" . cython-mode))
-
+(setq-default flycheck-disabled-checkers '(python-mypy))
 ;; try commenting this pyvenv stuff because pet supposedly does it
 ;; (defun pyvenv-autoload ()
     ;;   (interactive)
@@ -169,9 +183,9 @@
     ;; (add-hook 'python-ts-mode-hook 'pyvenv-autoload)
 
 ;; pet package suggested on reddit here https://www.reddit.com/r/emacs/comments/1e1nz44/comment/lcx3h7q
-(use-package pet
-  :config
-  (add-hook 'python-base-mode-hook 'pet-mode -10))
+;; (use-package pet
+;;   :config
+;;   (add-hook 'python-base-mode-hook 'pet-mode -10))
 
 ;; this fixes a problem where v0.20.4 of this grammar blows up with emacs
 (defvar genehack/tsx-treesit-auto-recipe
@@ -201,6 +215,11 @@
 (add-to-list 'treesit-auto-recipe-list genehack/typescript-treesit-auto-recipe)
 (add-to-list 'auto-mode-alist '("\\.\\(jsx\\|tsx\\)\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(js\\|ts\\)\\'" . typescript-ts-mode))
+ (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs
+                 '((typescript-mode typescript-ts-mode tsx-ts-mode) .
+                   ("env" "NODE_OPTIONS=--max-old-space-size=8192"
+                    "typescript-language-server" "--stdio"))))
 
 (use-package dockerfile-mode)
 
@@ -217,22 +236,94 @@
 (with-eval-after-load 'org
   (require 'org-tempo))
 
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "pandoc")
+  :bind (:map markdown-mode-map
+         ("C-c C-e" . markdown-do)))
+
+(use-package dape
+  ;; :preface
+  ;; By default dape shares the same keybinding prefix as `gud'
+  ;; If you do not want to use any prefix, set it to nil.
+  ;; (setq dape-key-prefix "\C-x\C-a")
+
+  ;;  :hook
+  ;; Save breakpoints on quit
+  ;; (kill-emacs . dape-breakpoint-save)
+  ;; Load breakpoints on startup
+  ;; (after-init . dape-breakpoint-load)
+
+  ;;:config
+  ;; Turn on global bindings for setting breakpoints with mouse
+  ;; (dape-breakpoint-global-mode)
+
+  ;; Info buffers to the right
+  ;; (setq dape-buffer-window-arrangement 'right)
+
+  ;; Info buffers like gud (gdb-mi)
+  ;; (setq dape-buffer-window-arrangement 'gud)
+  ;; (setq dape-info-hide-mode-line nil)
+
+  ;; Pulse source line (performance hit)
+  ;; (add-hook 'dape-display-source-hook 'pulse-momentary-highlight-one-line)
+
+  ;; Showing inlay hints
+  ;; (setq dape-inlay-hints t)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  ;; (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
+
+  ;; Kill compile buffer on build success
+  ;; (add-hook 'dape-compile-hook 'kill-buffer)
+
+    ;; Projectile users
+   ;; (setq dape-cwd-function 'projectile-project-root)
+)
+
+;; Enable repeat mode for more ergonomic `dape' use
+;; (use-package repeat
+  ;; :config
+;;   (repeat-mode))
+
 (use-package eat
-  :hook ('eshell-load-hook #'eat-eshell-mode))
+  :config (setq eat-term-name "xterm-256color") (setq explicit-zsh-args '("--login" "--interactive"))
+  :hook (('eshell-load-hook #'eat-eshell-mode)
+		 (eat-mode . (lambda () (display-line-numbers-mode -1)()))))
+
+;; (use-package websocket
+    ;;   :ensure t)
+    ;; (use-package claude-code-ide
+    ;;     :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev "anti-flicker-fixes")
+    ;;     :bind ("C-c C-'" . claude-code-ide-menu)
+    ;;     :config (claude-code-ide-emacs-tools-setup)
+    ;;             (setq claude-code-ide-terminal-backend 'eat))
+
+(use-package agent-shell
+  :ensure t
+  :bind (:map agent-shell-mode-map
+              ("RET" . newline)
+              ("C-RET" . shell-maker-submit))
+)
+
+(use-package revert-buffer-all
+  :commands (revert-buffer-all))
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
 ;; (require 'start-multiFileExample)
-(require 'asdf)
+;; (require 'asdf)
 (require 'mk-functions)
 (require 'meow-qwerty)
 
 ;; (start/hello)
-(asdf-enable)
+;; (asdf-enable)
 
 (use-package meow
   :config
   (add-to-list 'meow-mode-state-list '(git-commit-mode . insert))
+  (add-to-list 'meow-mode-state-list `(eat-mode . insert))
   (meow-setup)
   (meow-global-mode 1))
 
